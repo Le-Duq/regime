@@ -1,0 +1,16 @@
+
+{
+  "name": "Calculateur de Calories",
+  "short_name": "Calories",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Application de suivi des calories",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ]
+}
