@@ -15,18 +15,294 @@
   </script>
 </head>
 <body>
-  <h1>Calculateur de Calories</h1>
-  <form id="form">
-    <label for="ingredient">Ingrédient :</label>
-    <select id="ingredient" required>
-      <option value="">--Choisir un ingrédient--</option>
-    </select>
-    <label for="quantite">Quantité :</label>
-    <input type="number" id="quantite" placeholder="en g ou mL" required />
-    <button type="submit">Ajouter</button>
-  </form>
-  <ul id="liste"></ul>
-  <p>Total calories : <span id="total">0</span> kcal</p>
-  <script src="app.js"></script>
+        font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 80%;
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .input-container {
+      margin-bottom: 20px;
+    }
+    .ingredient-container {
+      margin-bottom: 10px;
+    }
+    select, input[type="number"] {
+      padding: 10px;
+      width: 100%;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px;
+      background-color: #28a745;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .results {
+      margin-top: 30px;
+      font-size: 1.2em;
+    }
+    .results div {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Suivi des Calories des Repas</h1>
+    <div class="input-container">
+      <h2>Entrez vos ingrédients</h2>
+      <div id="ingredients-list"></div>
+      <button onclick="addIngredient()">Ajouter un ingrédient</button>
+    </div>
+    
+    <div class="input-container">
+      <label for="poidsPlat">Poids total du plat (g):</label>
+      <input type="number" id="poidsPlat" placeholder="Poids total en grammes">
+    </div>
+
+    <div class="input-container">
+      <label for="portion">Portion consommée (g):</label>
+      <input type="number" id="portion" placeholder="Portion consommée en grammes">
+    </div>
+
+    <button onclick="calculerCalories()">Calculer les calories</button>
+
+    <div class="results">
+      <div id="totalCalories"></div>
+      <div id="caloriesParPortion"></div>
+    </div>
+  </div>
+
+  <script>
+    // Liste des ingrédients avec leurs calories pour 100g, classés par catégorie
+const ingredientsDB = {
+  // Viandes
+  "poulet": 120,
+  "bœuf": 250,
+  "porc": 242,
+  "agneau": 294,
+  "canard": 337,
+  "dinde": 135,
+  "steak haché": 215,
+  "saucisse": 280,
+  "cordon bleu": 220,
+  "lardon": 300,
+  "jambon blanc": 110,
+  "jambon cru": 240,
+  "escalope de dinde": 110,
+  "filet mignon": 160,
+
+  // Poissons & fruits de mer
+  "saumon": 208,
+  "thon": 144,
+  "cabillaud": 82,
+  "colin": 75,
+  "crevette": 90,
+  "moules": 120,
+  "calamar": 92,
+  "sardine": 208,
+
+  // Fromages
+  "emmental": 380,
+  "gruyère": 393,
+  "mozzarella": 280,
+  "feta": 264,
+  "camembert": 280,
+  "brie": 334,
+  "chèvre": 320,
+  "parmesan": 431,
+  "roquefort": 369,
+
+  // Œufs & produits laitiers
+  "œuf": 143,
+  "lait entier": 64,
+  "lait demi-écrémé": 47,
+  "lait écrémé": 35,
+  "crème fraîche": 300,
+  "crème liquide 30%": 290,
+  "yaourt nature": 60,
+  "yaourt grec": 97,
+  "fromage blanc": 80,
+
+  // Légumes
+  "tomate": 18,
+  "brocoli": 34,
+  "carotte": 41,
+  "poivron": 20,
+  "haricot vert": 31,
+  "épinard": 23,
+  "courgette": 17,
+  "aubergine": 25,
+  "chou-fleur": 25,
+  "chou": 24,
+  "concombre": 16,
+  "salade": 15,
+  "oignon": 40,
+  "ail": 131,
+  "navet": 28,
+  "betterave": 43,
+
+  // Féculents
+  "riz": 130,
+  "pâtes": 131,
+  "pommes de terre": 77,
+  "quinoa": 120,
+  "semoule": 360,
+  "polenta": 70,
+  "lentilles": 115,
+  "pois chiches": 120,
+  "haricots blancs": 102,
+  "pain": 265,
+  "baguette": 270,
+  "flocons d'avoine": 375,
+  "farine": 364,
+
+  // Fruits
+  "pomme": 52,
+  "banane": 89,
+  "poire": 57,
+  "fraise": 32,
+  "orange": 47,
+  "kiwi": 61,
+  "ananas": 50,
+  "mangue": 60,
+  "raisin": 67,
+  "melon": 34,
+  "pastèque": 30,
+  "abricot": 48,
+  "cerise": 63,
+
+  // Champignons
+  "champignon de Paris": 22,
+  "pleurote": 33,
+  "shiitake": 34,
+
+  // Épices & condiments
+  "sel": 0,
+  "poivre": 255,
+  "cumin": 375,
+  "paprika": 282,
+  "curcuma": 354,
+  "origan": 265,
+  "coriandre": 298,
+  "cannelle": 247,
+  "basilic": 23,
+
+  // Sauces
+  "ketchup": 112,
+  "mayonnaise": 680,
+  "sauce tomate": 29,
+  "sauce soja": 53,
+  "vinaigre balsamique": 14,
+  "moutarde": 135,
+  "béchamel": 105,
+  "sauce barbecue": 120,
+  "sauce curry": 190,
+
+  // Boissons
+  "eau": 0,
+  "soda": 41,
+  "jus d'orange": 45,
+  "café": 2,
+  "thé": 1,
+  "lait chocolaté": 89,
+  "boisson énergétique": 45,
+  "vin rouge": 85,
+  "bière": 43
+};
+
+    // Fonction pour ajouter un ingrédient
+    function addIngredient() {
+      const div = document.createElement('div');
+      div.classList.add('ingredient-container');
+      
+      // Liste déroulante des ingrédients triée
+      const ingredientSelect = document.createElement('select');
+      ingredientSelect.className = 'ingredient-name';
+      ingredientSelect.innerHTML = '<option value="">Sélectionner un ingrédient</option>';
+      
+      // Mise à jour de la liste des ingrédients
+      for (const ingredient in ingredientsDB) {
+        const option = document.createElement('option');
+        option.value = ingredient;
+        option.textContent = ingredient.charAt(0).toUpperCase() + ingredient.slice(1);
+        ingredientSelect.appendChild(option);
+      }
+
+      // Quantité de l'ingrédient
+      const quantityInput = document.createElement('input');
+      quantityInput.type = 'number';
+      quantityInput.className = 'ingredient-quantity';
+      quantityInput.placeholder = 'Quantité en grammes';
+      
+      div.innerHTML = `
+        <label>Ingrédient</label>
+      `;
+      div.appendChild(ingredientSelect);
+      div.appendChild(quantityInput);
+      div.innerHTML += `
+        <button onclick="removeIngredient(this)">Supprimer</button>
+      `;
+
+      document.getElementById('ingredients-list').appendChild(div);
+    }
+
+    // Supprimer un ingrédient de la liste
+    function removeIngredient(button) {
+      button.parentElement.remove();
+    }
+
+    // Fonction pour calculer les calories du plat
+    function calculerCalories() {
+      const poidsPlat = parseFloat(document.getElementById('poidsPlat').value);
+      const portion = parseFloat(document.getElementById('portion').value);
+
+      if (!poidsPlat || !portion) {
+        alert("Veuillez entrer le poids total du plat et la portion consommée.");
+        return;
+      }
+
+      let totalCalories = 0;
+
+      // Collecte des ingrédients et de leurs quantités
+      const ingredientContainers = document.querySelectorAll('.ingredient-container');
+      ingredientContainers.forEach(container => {
+        const name = container.querySelector('.ingredient-name').value;
+        const quantity = parseFloat(container.querySelector('.ingredient-quantity').value);
+
+        if (name && quantity && ingredientsDB[name] !== undefined) {
+          // Calcul des calories pour l'ingrédient
+          const calories = (ingredientsDB[name] * quantity) / 100;
+          totalCalories += calories;
+        }
+      });
+
+      // Calcul des calories de la portion
+      const caloriesParPortion = (totalCalories * portion) / poidsPlat;
+
+      // Affichage des résultats
+      document.getElementById('totalCalories').innerText = `Calories totales du plat: ${totalCalories.toFixed(2)} cal`;
+      document.getElementById('caloriesParPortion').innerText = `Calories pour la portion consommée: ${caloriesParPortion.toFixed(2)} cal`;
+    }
+  </script>
 </body>
 </html>
